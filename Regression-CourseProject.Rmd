@@ -15,7 +15,7 @@ library(xtable)
 theme_set(theme_grey(base_size = 8))
 data(mtcars)
 mpg <- mtcars$mpg
-am <- factor(mtcars$am, levels=c("0", "1"), labels=c("Automatic", "Manual"), ordered = TRUE)
+am <- factor(mtcars$am, levels=c(0,1), labels=c("Automatic", "Manual"), ordered = TRUE)
 d <- data.frame(mpg, am, cyl=mtcars$cyl)
 
 ```
@@ -56,10 +56,6 @@ stargazer(vif(model2), header = FALSE, title = "VIF for each predictor")
 ```
 
 
-```{r results="asis", warning=FALSE, echo=FALSE, message=FALSE}
-#stargazer(fit, title="Regression with Transmission Type (am) as the predictor, and Mileage as the outcome", header = FALSE)
-```
-
 # Appendix
 
 ## Coefficients {#coefficients}
@@ -86,7 +82,7 @@ pairs(mtcars, panel = panel.smooth)
 
 ## Linear Regression
 
-### Simple Model  {#simplemodel}
+### Simple Model (mpg ~ am) {#simplemodel}
 
 ```{r results='asis', echo=FALSE}
 model1 <- lm(mpg ~ am, data=mtcars)
@@ -96,8 +92,16 @@ stargazer(model1, header = FALSE, title = "Linear Model with transmission type (
 ggplot(d,aes(y=mpg, x=am)) + geom_point() + geom_smooth(method="lm", aes(group=1)) + ylab("Fuel Economy (MPG)") + xlab("Transmission Type")
 ```
 
+### R Plots of Simple Model
+
+```{r echo=FALSE}
+par(mar=c(2,2,2,2))
+par(mfrow=c(2,2))
+plot(model1)
+```
+
 ### Residual Plot of Selected Model {#residualplot}
-```{r }
+```{r echo=FALSE}
 model3 <- lm(mpg ~ . - cyl - disp - wt, data=mtcars)
 plot(fitted(model3), resid(model3))
 abline(h=0)
