@@ -1,0 +1,110 @@
+---
+title: 'Automatic or Manual Transmission: Which Has Better Fuel Economy?'
+author: "S. M. Kaiser"
+date: "June 15, 2015"
+output: pdf_document
+---
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(car)
+library(knitr)
+library(ggplot2)
+library(stargazer)
+library(xtable)
+#opts_chunk$set(echo=FALSE)
+theme_set(theme_grey(base_size = 8))
+data(mtcars)
+mpg <- mtcars$mpg
+am <- factor(mtcars$am, levels=c("0", "1"), labels=c("Automatic", "Manual"), ordered = TRUE)
+d <- data.frame(mpg, am, cyl=mtcars$cyl)
+
+```
+# Executive Summary
+Ignoring other variables, cars with manual transmissions are more fuel-efficient than those with automatics. On average, cars with manual transmissions achieve 24.4 miles per gallon, while automatics achieve 17.1 miles per gallon. 
+
+However, looking at all the data available, there are other factors to consider along with the 
+transmission type. 
+
+Manual transmissions happen to be more fuel-efficient than automatics due to these factors:
+
+- Cars with fewer cylinders are more likely to be manual
+- Cars with smaller displacement are more likely to be manual
+- Cars with lower weight are more likely to be manual
+
+In conclusion, transmission type is related to fuel economy, but not as much as the three factors above.
+
+# Exploratory Analysis
+
+See [Coefficients](#coefficients) for an explanation of each variable.
+
+A boxplot shows that manual transmissions are generally more fuel-efficient than automatics. However, there may be other factors that influence fuel economy.
+
+```{r echo=FALSE, fig.height=2, fig.width=3, fig.cap = "Boxplot of fuel economy by transmission type"}
+ggplot(d)  + geom_boxplot(aes(y=mpg, x=am)) + ylab("Fuel Economy (MPG)") + xlab("Transmission Type")
+```
+
+# Model selection
+Fitting a [simple model](#simplemodel) with `am` as the predictor and `mpg` as the outcome, there appears to be a slightly significant relationship between `am` and `mpg`, with a correlation of 0.6.
+
+Using VIF, we can identify the other variables that have a greater impact on `mpg` besides `am`. The top three by a significant margin are displacement (`disp`), cylinders (`cyl`) and weight (`wt`).
+```{r echo=FALSE}
+model2 <- lm(mpg ~ ., data=mtcars)
+```
+
+```{r results="asis", echo=FALSE}
+stargazer(vif(model2), header = FALSE, title = "VIF for each predictor")
+```
+
+
+```{r results="asis", warning=FALSE, echo=FALSE, message=FALSE}
+#stargazer(fit, title="Regression with Transmission Type (am) as the predictor, and Mileage as the outcome", header = FALSE)
+```
+
+# Appendix
+
+## Coefficients {#coefficients}
+These are the available variables in the data. For more information in R, see `?mtcars`.
+
+|Variable|Description
+|---|--------------------
+|mpg|Miles/(US) gallon
+|cyl|Number of cylinders
+|disp|Displacement (cu.in.)
+|hp|Gross horsepower
+|drat|Rear axle ratio
+|wt|Weight (lb/1000)
+|qsec|1/4 mile time in seconds
+|vs|"V" or straight cylinder layout
+|am|Transmission (0 = automatic, 1 = manual)
+|gear|Number of forward gears
+|carb|Number of carburetors
+
+## Pairs Plot
+```{r echo=FALSE}
+pairs(mtcars, panel = panel.smooth)
+```
+
+## Linear Regression
+
+### Simple Model  {#simplemodel}
+
+```{r results='asis', echo=FALSE}
+model1 <- lm(mpg ~ am, data=mtcars)
+stargazer(model1, header = FALSE, title = "Linear Model with transmission type (am) as the predictor, and MPG as the outcome")
+```
+```{r echo=FALSE, fig.width=4, fig.height=3}
+ggplot(d,aes(y=mpg, x=am)) + geom_point() + geom_smooth(method="lm", aes(group=1)) + ylab("Fuel Economy (MPG)") + xlab("Transmission Type")
+```
+
+### Residual Plot of Selected Model {#residualplot}
+```{r }
+model3 <- lm(mpg ~ . - cyl - disp - wt, data=mtcars)
+plot(fitted(model3), resid(model3))
+abline(h=0)
+
+```
+
+## Sources
+- [Variance Inflation Factor](https://github.com/mthaugs/Data-Science-Diagnostics/blob/master/VIF.pdf)
+- [Statistical Modeling: The Two Cultures](http://projecteuclid.org/download/pdf_1/euclid.ss/1009213726)
+- Hlavac, Marek (2014). stargazer: LaTeX code and ASCII text for well-formatted regression and summary statistics tables. http://CRAN.R-project.org/package=stargazer
